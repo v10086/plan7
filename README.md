@@ -12,7 +12,7 @@ go get github.com/zhongbo10086/goim
 
 结果
 ------------------------------------------------------------
-![test](https://github.com/zhongbo10086/goim/gochat.png) 
+![test](https://github.com/zhongbo10086/goim/blob/master/gochat.png) 
 
 
 
