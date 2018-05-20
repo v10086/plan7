@@ -25,7 +25,7 @@ func main() {
         fmt.Println("Hello World!")
 }
 
-//ScanLine ¶ÁÈ¡ÕûĞĞ
+
 func ScanLine() string {
         inputReader := bufio.NewReader(os.Stdin)
         input, _ := inputReader.ReadString('\n')
