@@ -14,6 +14,7 @@ go get github.com/go-redis/redis
 go get github.com/go-sql-driver/mysql
 
 安装uuid包
+
 github.com/pborman/uuid
 
 
