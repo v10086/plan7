@@ -23,8 +23,14 @@ github.com/pborman/uuid
 结果
 ------------------------------------------------------------
 ![test0](https://github.com/zhongbo10086/goim/blob/master/chat_img/chat0.png) 
+
+
 ![test1](https://github.com/zhongbo10086/goim/blob/master/chat_img/chat1.png) 
-![test2](https://github.com/zhongbo10086/goim/blob/master/chat_img/chat2.png) 
+
+
+![test2](https://github.com/zhongbo10086/goim/blob/master/chat_img/chat2.png)
+
+ 
 ![test3](https://github.com/zhongbo10086/goim/blob/master/chat_img/chat3.png) 
 
 
