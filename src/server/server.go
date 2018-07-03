@@ -1,5 +1,4 @@
-
-package main
+package server
 
 import (
         "fmt"
@@ -7,63 +6,64 @@ import (
         "strings"
         "time"
 		"encoding/json" 
-		"github.com/zhongbo10086/database"
-		"github.com/zhongbo10086/cache"
+		"dbs"
+		"cache"
 		"github.com/pborman/uuid"
+		"lib"
 )
 
-func onStartServer(port string) {
-        //´´½¨TCP¼àÌıµØÖ·
+func OnStartServer(port string) {
+        //åˆ›å»ºTCPç›‘å¬åœ°å€
         addr, err := net.ResolveTCPAddr("tcp", port)
-        checkErr(err)
+        lib.CheckErr(err)
 
-        //¿ªÊ¼¼àÌı
+        //å¼€å§‹ç›‘å¬
         listen, err := net.ListenTCP("tcp", addr)
-        checkErr(err)
+        lib.CheckErr(err)
 
         fmt.Println("Server started")
 
-        //±£´æ¿Í»§¶ËÁ¬½Ó
+        //ä¿å­˜å®¢æˆ·ç«¯è¿æ¥
         conns := make(map[string]net.Conn)
 
-        //ÏûÏ¢Í¨µÀ
+        //æ¶ˆæ¯é€šé“
         msg := make(chan string, 10)
 
-        //Æô¶¯Ğ­³Ì¹ã²¥ÏûÏ¢
+        //å¯åŠ¨åç¨‹å¹¿æ’­æ¶ˆæ¯
         go broadcast(&conns, msg)
 
-        //´¦ÀíÀ´×Ô·şÎñÆ÷µÄÃüÃû
-        go onServerMessage(&conns, msg)
+        //å¤„ç†æ¥è‡ªæœåŠ¡å™¨çš„å‘½å
+        go onMessage(&conns, msg)
 
-        //¼ì²éÓÃ»§ÊÇ·ñÔÚÏß
+        //æ£€æŸ¥ç”¨æˆ·æ˜¯å¦åœ¨çº¿
         go checkOnline(&conns, msg)
 
         for {
-                //½ÓÊÕ¿Í»§¶ËÁ¬½Ó
+                //æ¥æ”¶å®¢æˆ·ç«¯è¿æ¥
                 conn, err := listen.Accept()
-                checkErr(err)
-                //´¦ÀíÀ´×Ô¿Í»§¶ËĞÅÏ¢
+                lib.CheckErr(err)
+                //å¤„ç†æ¥è‡ªå®¢æˆ·ç«¯ä¿¡æ¯
                 go onClientMessage(conn, msg, &conns)
 
 
         }
 }
 
-//µ±ÓĞĞÂµÄÁ¬½Ó½¨Á¢
+//å½“æœ‰æ–°çš„è¿æ¥å»ºç«‹
 func onClientMessage(conn net.Conn, msg chan string, conns *map[string]net.Conn) {
-        //³õ´ÎÁ¬½ÓÌáÊ¾ÊäÈëµÇÂ¼ĞÅÏ¢
+        //åˆæ¬¡è¿æ¥æç¤ºè¾“å…¥ç™»å½•ä¿¡æ¯
         conn.Write([]byte("connected."))
 		conn.Write([]byte("Please enter login information"))
 		
 		
-		//¶¨Òå½ÓÊÕµÄÏûÏ¢¸ñÊ½
-		var inputMessage struct {
+		//å®šä¹‰æ¥æ”¶çš„æ¶ˆæ¯æ ¼å¼
+		var inputMsg struct {
 			Token string
 			Action string 
 			Params string
 		}
-		//¶¨Òå½ÓÊÕµÄÏûÏ¢¸ñÊ½
-		var outputMessage struct {
+		//å®šä¹‰æ¥æ”¶çš„æ¶ˆæ¯æ ¼å¼
+		var outputMsg struct {
 			Action string 
 			Messages string
 		}
@@ -86,28 +86,28 @@ func onClientMessage(conn net.Conn, msg chan string, conns *map[string]net.Conn)
                         data[length] = 0
                 }
 
-                //½âÎö¿Í»§¶ËÄÚÈİ
-                err = json.Unmarshal(data[0:length],&inputMessage)
+                //è§£æå®¢æˆ·ç«¯å†…å®¹
+                err = json.Unmarshal(data[0:length],&inputMsg)
 				
 				if(err != nil){
-					sendMsg(conn,"say","ÊäÈëÄÚÈİ¸ñÊ½²»ÕıÈ·")
+					sendMsg(conn,"say","è¾“å…¥å†…å®¹æ ¼å¼ä¸æ­£ç¡®")
 					continue
 				}
-				outputMessage.Action = inputMessage.Action
+				outputMsg.Action = inputMsg.Action
 			
-				if(inputMessage.Action !="login"&& inputMessage.Action != "pong" &&  inputMessage.Action != "ping" ){
-					username,err := checkAuth(inputMessage.Token)
+				if(inputMsg.Action !="login"&& inputMsg.Action != "pong" &&  inputMsg.Action != "ping" ){
+					username,err := checkAuth(inputMsg.Token)
 					if(err != nil){
-						sendMsg(conn,"say","Éí·İÈÏÖ¤²»Í¨¹ı")
+						sendMsg(conn,"say","èº«ä»½è®¤è¯ä¸é€šè¿‡")
 						continue
 					}
 					loginInfo.Username = username
 				
 				}
 
-                switch inputMessage.Action {
+                switch inputMsg.Action {
 					case "login":
-						if err := json.Unmarshal([]byte(inputMessage.Params), &loginInfo); err != nil { 
+						if err := json.Unmarshal([]byte(inputMsg.Params), &loginInfo); err != nil { 
 							panic(err) 
 						}
 						token := login(conn,loginInfo.Username,loginInfo.Password)
@@ -115,16 +115,16 @@ func onClientMessage(conn net.Conn, msg chan string, conns *map[string]net.Conn)
 							continue
 						}
 						
-						//ÅĞ¶ÏÊÇ·ñÓĞÍ¬ÃûêÇ³Æ²¢±£´æĞÂµÄ¿Í»§¶ËÁ¬½Ó ÏÂÏß¾ÉµÄ¿Í»§¶ËÁ¬½Ó
+						//åˆ¤æ–­æ˜¯å¦æœ‰åŒåæ˜µç§°å¹¶ä¿å­˜æ–°çš„å®¢æˆ·ç«¯è¿æ¥ ä¸‹çº¿æ—§çš„å®¢æˆ·ç«¯è¿æ¥
 						if _, ok := (*conns)[loginInfo.Username]; ok {
-								sendMsg((*conns)[loginInfo.Username],"say","ÄãÔÚĞÂ¿Í»§¶ËµÇÂ¼,½«±»ÌßÏÂÏß")
+								sendMsg((*conns)[loginInfo.Username],"say","ä½ åœ¨æ–°å®¢æˆ·ç«¯ç™»å½•,å°†è¢«è¸¢ä¸‹çº¿")
 								(*conns)[loginInfo.Username].Close()
 						} else {
 							sendMsg(conn,"login",token)
-							//³õ´ÎµÇÂ¼ÈëÈº ÌáÊ¾»¶Ó­
-							messages = "[" + loginInfo.Username + "]: ¼ÓÈë."
+							//åˆæ¬¡ç™»å½•å…¥ç¾¤ æç¤ºæ¬¢è¿
+							messages = "[" + loginInfo.Username + "]: åŠ å…¥."
 							fmt.Println(messages)
-							outputMessage.Action = "say"
+							outputMsg.Action = "say"
 
 						}
 						
@@ -132,7 +132,7 @@ func onClientMessage(conn net.Conn, msg chan string, conns *map[string]net.Conn)
 						
 						
 					case "say":
-							messages = "[" + loginInfo.Username + "]" + ": " + inputMessage.Params
+							messages = "[" + loginInfo.Username + "]" + ": " + inputMsg.Params
 							fmt.Println(messages)
 							
 					case "ping":
@@ -143,7 +143,7 @@ func onClientMessage(conn net.Conn, msg chan string, conns *map[string]net.Conn)
 							continue
 					}
 					
-				msg <- getSendMsg(outputMessage.Action,messages)
+				msg <- getSendMsg(outputMsg.Action,messages)
         }
 
 }
@@ -153,17 +153,17 @@ func checkAuth(token string)(username string ,err error) {
 		username, err = redis.Get("user:auth:token:"+token).Result()
 		return
 }
-//ÓÃ»§µÇÂ¼
+//ç”¨æˆ·ç™»å½•
 func login(conn net.Conn,username,inPassword string) string {
 		var password string
-		db := database.GetCon()
+		db := dbs.GetCon()
 		stmt, _ := db.Prepare("select password from user where username = ? limit 1")
 		defer stmt.Close()
 	
 		rows, err := stmt.Query(username)
 		defer rows.Close()
 		if err != nil {
-			sendMsg(conn,"say","[Server]: ·şÎñÆ÷´íÎó.1")
+			sendMsg(conn,"say","[Server]: æœåŠ¡å™¨é”™è¯¯.1")
 			conn.Close()
 			return "ko"
 		}
@@ -171,7 +171,7 @@ func login(conn net.Conn,username,inPassword string) string {
 		for rows.Next() {
 			err = rows.Scan(&password)
 			if err != nil {
-				sendMsg(conn,"say","[Server]: ·şÎñÆ÷´íÎó.2")
+				sendMsg(conn,"say","[Server]: æœåŠ¡å™¨é”™è¯¯.2")
 				conn.Close()
 				return "ko"
 			}
@@ -179,7 +179,7 @@ func login(conn net.Conn,username,inPassword string) string {
 		}
 		
 		if(inPassword  != password){
-				sendMsg(conn,"say","[Server]: ÕËºÅ»òÃÜÂë´íÎó.")
+				sendMsg(conn,"say","[Server]: è´¦å·æˆ–å¯†ç é”™è¯¯.")
 				conn.Close()
 				return "ko"
 		}
@@ -188,7 +188,7 @@ func login(conn net.Conn,username,inPassword string) string {
 		err = redis.Set("user:auth:token:"+token,username,time.Second*7200).Err()
 	    if err != nil {
 			panic(err)
-			sendMsg(conn,"say","[Server]: redis set ´íÎó.")
+			sendMsg(conn,"say","[Server]: redis set é”™è¯¯.")
 			conn.Close()
 			return "ko"
 		}
@@ -196,13 +196,13 @@ func login(conn net.Conn,username,inPassword string) string {
 
 }
 
-//Èº¹ã²¥ĞÅÏ¢
+//ç¾¤å¹¿æ’­ä¿¡æ¯
 func broadcast(conns *map[string]net.Conn, msg chan string) {
         for {
-                //´ÓÍ¨µÀÖĞ½ÓÊÕÏûÏ¢
+                //ä»é€šé“ä¸­æ¥æ”¶æ¶ˆæ¯
                 data := <-msg
 
-                //Ñ­»·¿Í»§¶ËÁ¬½Ó²¢·¢ËÍÏûÏ¢
+                //å¾ªç¯å®¢æˆ·ç«¯è¿æ¥å¹¶å‘é€æ¶ˆæ¯
                 for key, value := range *conns {
                         _, err := value.Write([]byte(data))
                         if err != nil {
@@ -213,20 +213,20 @@ func broadcast(conns *map[string]net.Conn, msg chan string) {
 }
 
 
-//´¦Àí·şÎñÆ÷µÄÃüÁî
-func onServerMessage(conns *map[string]net.Conn, msg chan string) {
+//å¤„ç†æœåŠ¡å™¨çš„å‘½ä»¤
+func onMessage(conns *map[string]net.Conn, msg chan string) {
         for {
-                message := ScanLine()
+                message := lib.ScanLine()
 
-                //½âÎöÃüÁî
+                //è§£æå‘½ä»¤
                 cmd := strings.Split(string(message), "|")
                 if len(cmd) > 1 {
-						cmd[0] = replacString(cmd[0])
-						cmd[1] = replacString(cmd[1])
+						cmd[0] = lib.FmtStr(cmd[0])
+						cmd[1] = lib.FmtStr(cmd[1])
                         switch cmd[0] {
 							case "ko":
 									if _, ok := (*conns)[cmd[1]]; ok {
-										//¹Ø±Õ¶ÔÓ¦¿Í»§¶ËÁ¬½Ó
+										//å…³é—­å¯¹åº”å®¢æˆ·ç«¯è¿æ¥
 										(*conns)[cmd[1]].Close()
 										msg <- getSendMsg("say","[Server]: ko [" + cmd[1] + "]")
 									}
@@ -242,10 +242,10 @@ func onServerMessage(conns *map[string]net.Conn, msg chan string) {
 }
 
 
-//¼ì²é¿Í»§¶ËÊÇ·ñÔÚÏß
+//æ£€æŸ¥å®¢æˆ·ç«¯æ˜¯å¦åœ¨çº¿
 func checkOnline(conns *map[string]net.Conn, msg chan string) {
     for {
-        //Ñ­»·ping¿Í»§¶Ë 
+        //å¾ªç¯pingå®¢æˆ·ç«¯ 
         time.Sleep(1 * time.Second)
         for key, value := range *conns {
                 go ping(key,value,msg)
@@ -253,11 +253,11 @@ func checkOnline(conns *map[string]net.Conn, msg chan string) {
     }
 
 }
-//ping ¹¦ÄÜ
+//ping åŠŸèƒ½
 func ping(user string,conn net.Conn,msg chan string) {
         err := sendMsg(conn,"ping","")
         if err != nil {
-			message := "[Server]:"+user+" ÒÑ¾­ÏÂÏß"
+			message := "[Server]:"+user+" å·²ç»ä¸‹çº¿"
 			fmt.Println(message)
 			message = getSendMsg("say",message)
 			
@@ -265,7 +265,8 @@ func ping(user string,conn net.Conn,msg chan string) {
         }
 
 }
-//·¢ËÍÏûÏ¢
+
+//å‘é€æ¶ˆæ¯
 func sendMsg(conn net.Conn,action string,msg string) error {
 		message:= getSendMsg(action,msg)
 		_, err := conn.Write([]byte(message))
@@ -273,14 +274,16 @@ func sendMsg(conn net.Conn,action string,msg string) error {
 			
 		
  }
+ 
+ //è·å–å‘é€çš„æ¶ˆæ¯
  func getSendMsg(action string,msg string) string {
- 		var outputMessage struct {
+ 		var outputMsg struct {
 			Action string 
 			Messages string
 		}
-		outputMessage.Action = action
-		outputMessage.Messages = msg
-		message ,_:= json.Marshal(outputMessage)
+		outputMsg.Action = action
+		outputMsg.Messages = msg
+		message ,_:= json.Marshal(outputMsg)
 		return string(message )
  
  }
