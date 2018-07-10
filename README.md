@@ -5,15 +5,15 @@
 安装使用说明
 --------------------------------------------------------------------------
 
-安装Redis
+安装Redis客户端
 
 go get github.com/go-redis/redis
 
-安装msyql驱动
+安装msyql客户端
 
 go get github.com/go-sql-driver/mysql
 
-安装uuid包
+安装uuid拓展包
 
 github.com/pborman/uuid
 
