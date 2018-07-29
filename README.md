@@ -20,9 +20,9 @@ github.com/pborman/uuid
 
 
 
-结果
+运行示例
 ------------------------------------------------------------
-![test0](https://github.com/zhongbo10086/plan7/blob/master/chat_img/chat0.png) 
+![test0](https://github.com/zhongbo10086/plan7/blob/master/chat_img/QQ图片20180729150246.png) 
 
 
 ![test1](https://github.com/zhongbo10086/plan7/blob/master/chat_img/chat1.png) 
