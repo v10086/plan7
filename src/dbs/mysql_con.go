@@ -11,7 +11,7 @@ var (
 
 func init() {
 	var err error
-	var dsn string = "root:abc1688@tcp(localhsot:3306)/goapp?charset=utf8"
+	var dsn string = "root:abc1688@tcp(127.0.0.1:3306)/goapp?charset=utf8"
 	db, err = sql.Open("mysql", dsn)
 	if err == nil {
 		db.SetMaxOpenConns(2000)
