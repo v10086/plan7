@@ -21,7 +21,6 @@ func init() {
 	}
 }
 
-
 func GetCon() *sql.DB {
 	return db
 }

@@ -1,9 +1,9 @@
 package cache
+
 import "github.com/go-redis/redis"
 
-
 var (
-	client *redis.Client 
+	client *redis.Client
 )
 
 func init() {
@@ -14,9 +14,6 @@ func init() {
 	})
 }
 
-func GetCon() *redis.Client  {
+func GetCon() *redis.Client {
 	return client
 }
-
-
-
